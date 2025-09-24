@@ -1,4 +1,5 @@
-<img width="3432" height="940" alt="image" src="https://github.com/user-attachments/assets/547af01d-6941-46c1-bbd0-bc519c9459e6" />
+<img width="200" height="200" alt="image" src="https://github.com/user-attachments/assets/3ffc46c1-e690-431b-84f0-110a0f0b4cd6" />
+
 
 # SPOTIFY USER PERSONALIZATION CASE STUDY
 Simulated dataset utilizing BigQuery, Python, A/B testing, and data visualization.
