@@ -6,45 +6,42 @@
 # Define user profiles for personalization in BigQuery
 
 ## We will create some user metrics for our analysis.
-➡️ **avg_duration_length** → mean minutes per user
-➡️ **skip_rate** → song skip rate %  
+➡️ **avg_session_length** → mean minutes per user  
+➡️ **skip_rate** → song skip rate % per user  
 ➡️ **genre_popularity** → most frequently played genre  
-➡️ **songs_per_day** → daily listening frequency  
+➡️ **songs_per_day** → daily listening frequency per user   
 ➡️ **recency** → days since last session  
 
 *Note: Truncated BigQuery file format*
 ***
-### Average Duration Length per user
+### Average Session Length per user
 ````sql
 SELECT 
-  e.group AS exp_group,
-  COUNT(e.user_id) AS num_users,
-  ROUND(AVG(l.duration_listened)/60,2) AS avg_duration_listened_mins
-FROM spotify.listening_events l
-LEFT JOIN spotify.experiments e
-  ON l.user_id = e.user_id 
-GROUP BY exp_group;
+  user_id,
+  ROUND(AVG(duration_listened)/60, 2) AS avg_session_length
+FROM spotify.listening_events
+GROUP BY user_id
+ORDER BY avg_session_length DESC;
 ````
+<img width="330" height="433" alt="Screenshot 2025-09-23 at 10 36 37 PM" src="https://github.com/user-attachments/assets/8f036161-1451-404a-87ae-2a88858745e7" />
 
-<img width="561" height="83" alt="Screenshot 2025-09-22 at 9 27 14 PM" src="https://github.com/user-attachments/assets/103f8689-0d26-47f9-bb7e-c75704555a8b" />
-
-Both groups have an average listening duration of 1.81 minutes.
+User 2837 has the highest average session length with 4.56 mins.
 
 ***
-### Skip Rate %
+### Skip Rate % per user
 ````sql
 SELECT 
-  song_id,
+  user_id,
+  COUNT(song_id) AS num_songs,
   ROUND(AVG(CASE WHEN skipped = TRUE THEN 1 ELSE 0 END), 2) AS skip_rate
 FROM spotify.listening_events
-GROUP BY song_id
-ORDER BY skip_rate DESC
-LIMIT 10;
+GROUP BY user_id
+ORDER BY skip_rate DESC;
 ````
+<img width="435" height="433" alt="Screenshot 2025-09-23 at 10 39 21 PM" src="https://github.com/user-attachments/assets/b9c3a6d1-9585-4dce-8618-ba64690ecd39" />
 
-<img width="314" height="299" alt="Screenshot 2025-09-22 at 9 37 39 PM" src="https://github.com/user-attachments/assets/e28eaec1-d1c7-4563-838e-0bf2733fbe96" />
+Top four users with 100% skip rate have only listened to 4-5 songs. It's possible that the users came into Spotify with a free trial and did not enjoy it.
 
-Song 1370 has the highest skip rate of 61%. It can't be THAT bad... right?
 ***
 ### Genre Popularity
 ````sql
@@ -70,7 +67,7 @@ ORDER BY genre_popularity_rank;
 Classical genre is the most popular among the users.
 ***
 
-### Average Daily Listening Frequency
+### Average Daily Listening Frequency per user
 
 ````sql
 SELECT
