@@ -6,15 +6,15 @@
 # Define user profiles for personalization in BigQuery
 
 ## We will create some user metrics for our analysis.
-➡️ **avg_duration_length** → mean minutes per test group 
-➡️ **skip_rate** → song skip rate %
+➡️ **avg_duration_length** → mean minutes per user
+➡️ **skip_rate** → song skip rate %  
 ➡️ **genre_popularity** → most frequently played genre  
 ➡️ **songs_per_day** → daily listening frequency  
 ➡️ **recency** → days since last session  
 
 *Note: Truncated BigQuery file format*
 ***
-### Average Duration Length (mins.) by test group 
+### Average Duration Length per user
 ````sql
 SELECT 
   e.group AS exp_group,
@@ -65,6 +65,32 @@ FROM (
 ORDER BY genre_popularity_rank;
 ````
 
-Classical genre is the most popular among the users.
-
 <img width="542" height="300" alt="Screenshot 2025-09-22 at 10 13 33 PM" src="https://github.com/user-attachments/assets/9c5269b1-78c6-4b6b-b445-4168b7d4fb05" />
+
+Classical genre is the most popular among the users.
+***
+
+### Average Daily Listening Frequency
+
+````sql
+SELECT
+  user_id,
+  DATE_DIFF(MAX(timestamp), MIN(timestamp), DAY) AS num_days,
+  ROUND(SUM(num_songs)/DATE_DIFF(MAX(timestamp), MIN(timestamp), DAY), 2) AS avg_daily_listening_frequency
+FROM (
+  SELECT
+    user_id,
+    timestamp,
+    COUNT(song_id) AS num_songs
+  FROM spotify.listening_events
+  GROUP BY user_id, timestamp
+)
+GROUP BY user_id
+HAVING DATE_DIFF(MAX(timestamp), MIN(timestamp), DAY) > 0
+ORDER BY avg_daily_listening_frequency DESC;
+````
+<img width="437" height="434" alt="Screenshot 2025-09-23 at 10 09 35 PM" src="https://github.com/user-attachments/assets/2e454916-724e-4094-9ab8-0b6c989d1275" />
+
+➖ Average was calculated as the number of songs listened to by the user and the number of days between the last timestamp listened and the first timestamp listened. User 2614 has the highest average daily listening frequency. However, the user has only listened over the course of four days.  
+➖ This requires further analysis if highest average daily listening frequency was due to chance which will be covered in Python, i.e. Chi-Squared Test.  
+➖ The results were also sorted to omit where number of days was 0. This could be a new user listening to Spotify for the first time via their free trial and not listening again.
